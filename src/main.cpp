@@ -6,32 +6,39 @@
 #include <vector>
 #include <format>
 #include <string>
+//#include <iomanip>  // std::setprecision
 
 #include <SDL3/SDL.h>
 
 #include "render.hpp"
 #include "cell.hpp"
 #include "util.hpp"
+#include "sim.hpp"
 
 
 size_t WIDTH = 1000, HEIGHT = 1000;
 double FPS = 60.0;
 
-int minRuleVal = -8, maxRuleVal = 8;
+float minRuleVal = -16.0f, maxRuleVal = 16.0f;
 
 size_t numThreads = 16;
 
 // length/width of square for each cell
 size_t pixelsPerCell = 3;
 
+// default CGOL
+const Rules defaultCgol {2.0f,4.0f,  3.0f,3.0f,  0.0f,  {}};
+
 
 int main() {
 	srand(time(0));
 
+	//std::cout << std::setprecision(1);
+
 	bool RUNNING = true;
 	std::vector<RGBA_t> screen(WIDTH*HEIGHT, RGBA_t{0,0,0,255});
 
-	Renderer renderer {WIDTH, HEIGHT, "CGOL+"};
+	Renderer renderer {WIDTH, HEIGHT, "Cellular Automata Unbounded"};
 
 	size_t cellsWidth = WIDTH/pixelsPerCell;
 	size_t cellsHeight = HEIGHT/pixelsPerCell;
@@ -40,11 +47,21 @@ int main() {
 	std::vector<Cell> cellMap(cellsWidth*cellsHeight, Cell{0}), 
 					  newMap (cellsWidth*cellsHeight, Cell{0});
 
+	/*
+	int minToSurvive;
+	// minimum surrounding for overpopulation death
+	int minToDie;
+	// min amount of surrounding for reproduction
+	int minForReproduction;
+	// max amount of surrounding for reproduction
+	int maxForReproduction;
+	// value taken from out of bounds areas
+	int outOfBounds;
+	 */
 	std::vector<Rules> rules {
-		Rules{-1, -1, -1, -1, 0, {0, 0, 1}}, 
-		Rules{ 2,  3, -1, -1, 0, {0, 1, 2}}, 
-		Rules{ 2,  5,  4,  4, 0, {0, 0, 1}}, 
-		//Rules{ 2,  4,  3, 3, {1, 1, 1}},  // STANDARD
+		Rules{-1.0f,-1.0f,  -1.0f,-1.0f,  0.0f,  {0.0f,0.0f,1.0f}}, 
+		Rules{ 2.0f, 3.0f,  -1.0f,-1.0f,  0.0f,  {0.0f,1.0f,2.0f}}, 
+		Rules{ 2.0f, 5.0f,   4.0f, 4.0f,  0.0f,  {0.0f,0.0f,1.0f}}, 
 	};
 	std::vector<RGBA_t> stateColors {
 		RGBA_t{  0,   0,   0, 255}, 
@@ -98,15 +115,15 @@ int main() {
 			for (size_t ri = 0; ri < rules.size(); ++ri) {
 				std::cout 
 					<< "State " << ri << ": "
-					<< getPresentColor(ri, 0) << padString(rules[ri].minToSurvive, 2) << ansi_reset << ","
-					<< getPresentColor(ri, 1) << padString(rules[ri].minToDie, 2) << ansi_reset << " ~ "
-					<< getPresentColor(ri, 2) << padString(rules[ri].minForReproduction, 2) << ansi_reset << ","
-					<< getPresentColor(ri, 3) << padString(rules[ri].maxForReproduction, 2) << ansi_reset << " ~ "
-					<< getPresentColor(ri, 4) << padString(rules[ri].outOfBounds, 2) << ansi_reset << " {";
+					<< getPresentColor(ri, 0) << padString(round(rules[ri].minToSurvive, 1), 4) << ansi_reset << ","
+					<< getPresentColor(ri, 1) << padString(round(rules[ri].minToDie, 1), 4) << ansi_reset << " ~ "
+					<< getPresentColor(ri, 2) << padString(round(rules[ri].minForReproduction, 1), 4) << ansi_reset << ","
+					<< getPresentColor(ri, 3) << padString(round(rules[ri].maxForReproduction, 1), 4) << ansi_reset << " ~ "
+					<< getPresentColor(ri, 4) << padString(round(rules[ri].outOfBounds, 1), 4) << ansi_reset << " {";
 				for (size_t si = 0; si < rules[ri].surrounding.size(); ++si) {
 					std::cout 
 						<< getPresentColor(ri, 5 + si) 
-						<< padString(rules[ri].surrounding[si], 2) 
+						<< padString(round(rules[ri].surrounding[si], 1), 4) 
 						<< ansi_reset << (si == rules[ri].surrounding.size()-1 ? "}  [": ",");
 				}
 				// color
@@ -143,22 +160,22 @@ int main() {
 			if (event.type == SDL_EVENT_QUIT) {
 				RUNNING = false;
 			}
-			else if (event.type == SDL_EVENT_KEY_DOWN) {
-				switch (event.key.key) {
-					case SDL_EVENT_MOUSE_BUTTON_DOWN:  // place cell
-						if (paused) {
-							SDL_GetMouseState(&mouseX, &mouseY);
-							if (mouseX >= 0 && mouseX < WIDTH && mouseY >= 0 && mouseY < HEIGHT) {
-								// add to both cellMap AND render
+			else if (event.type ==  SDL_EVENT_MOUSE_BUTTON_DOWN) {  // place cell
+				if (paused) {
+					SDL_GetMouseState(&mouseX, &mouseY);
+					if (mouseX >= 0 && mouseX < WIDTH && mouseY >= 0 && mouseY < HEIGHT) {
+						// add to both cellMap AND render
 
-								for (size_t py = 0; py < pixelsPerCell; ++py) {
-									for (size_t px = 0; px < pixelsPerCell; ++px) {
-										screen[(pixelsPerCell*mouseY+py)*WIDTH + (pixelsPerCell*mouseX+px)] = stateColors[newMap[mouseY*cellsWidth + mouseX].state];
-									}
-								}
+						for (size_t py = 0; py < pixelsPerCell; ++py) {
+							for (size_t px = 0; px < pixelsPerCell; ++px) {
+								screen[(pixelsPerCell*mouseY+py)*WIDTH + (pixelsPerCell*mouseX+px)] = stateColors[newMap[mouseY*cellsWidth + mouseX].state];
 							}
 						}
-						break;
+					}
+				}
+			}
+			else if (event.type == SDL_EVENT_KEY_DOWN) {
+				switch (event.key.key) {
 
 					case SDLK_ESCAPE: 
 						RUNNING = false;
@@ -186,6 +203,13 @@ int main() {
 						break;
 					case SDLK_EQUALS:  // increment rule value
 						edit_desire = 1;
+						break;
+					
+					case SDLK_KP_PLUS: 
+						edit_desire = .1;
+						break;
+					case SDLK_KP_MINUS: 
+						edit_desire = -.1;
 						break;
 					
 					case SDLK_Q:  // increase red
@@ -343,8 +367,16 @@ int main() {
 				threads.push_back(std::thread(doCellCalc, 
 					0, cellsHeight, 
 					xChunkSize*t, xChunkSize*(t+1) + (t == numThreads-1 ? overflow : 0), 
-					cellsHeight, cellsWidth, cellMap, std::ref(newMap), rules, stateColors, std::ref(screen), 
-					pixelsPerCell, WIDTH, HEIGHT
+					cellsHeight, 
+					cellsWidth, 
+					std::cref(cellMap), 
+					std::ref(newMap), 
+					std::cref(rules), 
+					std::cref(stateColors), 
+					std::ref(screen), 
+					pixelsPerCell, 
+					WIDTH, 
+					HEIGHT
 				));
 			}
 

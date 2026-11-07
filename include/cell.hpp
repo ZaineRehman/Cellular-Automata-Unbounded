@@ -1,9 +1,7 @@
 #pragma once
 
 #include <iostream>
-#include <unordered_map>
-#include <vector>
-#include <fstream>
+//#include <unordered_map>
 
 
 struct Point {
@@ -24,7 +22,7 @@ struct Point {
 };
 
 // custom hash function for Point
-template <>
+/*template <>
 struct std::hash<Point> {
 	std::size_t operator()(const Point& point) const {
 		std::size_t h1 = std::hash<int>{}(point.x);
@@ -35,13 +33,13 @@ struct std::hash<Point> {
 
 		return seed;
 	}
-};
+};*/
 
 
 class Cell {
 public:
 	//Point coords {};
-	uint16_t state;
+	int state;
 
 	Cell() = default;
 	Cell(int _state) : state(_state) {}
@@ -51,122 +49,13 @@ public:
 };
 
 
-// rules for a given cell state
-struct Rules {
-	// minimum surrounding to survivwe
-	int minToSurvive;
-	// minimum surrounding for overpopulation death
-	int minToDie;
-	// min amount of surrounding for reproduction
-	int minForReproduction;
-	// max amount of surrounding for reproduction
-	int maxForReproduction;
-	// value taken from out of bounds areas
-	int outOfBounds;
-	// surrounding values taken from each cell state
-	// index 0 = for empty cells, index 1 = state 1, etc. 
-	std::vector<int> surrounding;
+#include "sim.hpp"
 
-	Rules() = default;
-	Rules(int _minToSurvive, int _minToDie, int _minForReproduction, int _maxForReproduction, int _outOfBounds, const std::vector<int>& _surrounding) 
-		: minToSurvive(_minToSurvive), minToDie(_minToDie), minForReproduction(_minForReproduction), maxForReproduction(_maxForReproduction), outOfBounds(_outOfBounds), surrounding(_surrounding) {}
-	Rules(const Rules& other) = default;
-};
+// functions to return the value of surrounding cells
+namespace Neighborhood {
+	// standard surrounding
+	float standard(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT);
 
-// returns the number of surrounding cells
-int getSurrounding(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT) {
-	int total = 0;
-
-	static const Point toCheck[] = {
-		{-1, -1}, {-1, 0}, {-1, 1},  // left row
-		{0, -1}, {0, 1},             // middle row
-		{1, -1}, {1, 0}, {1, 1}      // right row
-	};
-
-	for (size_t i = 0; i < 8; ++i) {
-		// if cell exists
-		int newY = point.y + toCheck[i].y, newX = point.x + toCheck[i].x;
-
-		if (newX >= 0 && newX < static_cast<int>(WIDTH) && newY >= 0 && newY < static_cast<int>(HEIGHT)) {
-			int cstate = cells[newY*static_cast<int>(WIDTH) + newX].state;
-			total += rules.surrounding[cstate];
-		} else {
-			// out of bounds
-			total += rules.outOfBounds;
-		}
-	}
-
-	return total;
-}
-
-
-// cell calculation
-void doCellCalc(
-	size_t yStart, size_t yEnd, 
-	size_t xStart, size_t xEnd, 
-	size_t cellsHeight, size_t cellsWidth, 
-	const std::vector<Cell>& cellMap, std::vector<Cell>& newMap, 
-	const std::vector<Rules>& rules, const std::vector<RGBA_t>& stateColors, 
-	std::vector<RGBA_t>& screen, 
-	size_t pixelsPerCell, size_t WIDTH, size_t HEIGHT
-) {
-	for (size_t y = yStart; y < yEnd; ++y) {
-		for (size_t x = xStart; x < xEnd; ++x) {
-			newMap[y*cellsWidth + x] = cellMap[y*cellsWidth + x];
-			const Point point {x, y};
-
-			// check if cell
-			Cell c = cellMap[y*cellsWidth + x];
-			if (c.state != 0) {
-				const Rules& local = rules[c.state];
-				// get surrounding cell outcome
-				int outcome = getSurrounding(point, cellMap, local, cellsWidth, cellsHeight);
-
-				if (outcome < local.minToSurvive) {
-					// lower state
-					newMap[y*cellsWidth + x].state--;
-				} else if (outcome >= local.minToDie) {
-					// raise state
-					newMap[y*cellsWidth + x].state++;
-					// state too big? kill it
-					if (newMap[y*cellsWidth + x].state == rules.size()) {
-						newMap[y*cellsWidth + x].state = 0;
-					}
-				}
-			} else {
-				// no cell, check if life
-				int outcome = getSurrounding(point, cellMap, rules[0], cellsWidth, cellsHeight);
-
-				// cells regenerate preferring higher states
-				for (size_t r = 1; r < rules.size(); ++r) {
-					if (rules[r].minForReproduction <= outcome && outcome <= rules[r].maxForReproduction) {
-						// alive!
-						newMap[y*cellsWidth + x] = Cell{r};
-					}
-				}
-			}
-
-			// calculate render
-			for (size_t py = 0; py < pixelsPerCell; ++py) {
-				for (size_t px = 0; px < pixelsPerCell; ++px) {
-					screen[(pixelsPerCell*y+py)*WIDTH + (pixelsPerCell*x+px)] = stateColors[newMap[y*cellsWidth + x].state];
-				}
-			}
-		}
-	}
-}
-
-
-void readFileIntoRules(std::vector<Rules>& rules, const std::string& path) {
-	/*
-	 * -1,-1,-1,-1 ~ 0,1,1 _   0,  0,  0
-	 *  2, 5, 4, 4 ~ 0,2,0 _ 255,  0,  0
-	 *  4, 5, 3, 3 ~ 0,1,1 _ 255,255,255
-	**/
-
-	std::ifstream file(path);
-
-	for (std::string line; std::getline(file, line);) {
-
-	}
+	// diagonals unweighted, sides weighted
+	float sidesBias(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT);
 }

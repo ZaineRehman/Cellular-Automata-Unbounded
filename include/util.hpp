@@ -2,6 +2,8 @@
 
 #include <string>
 #include <vector>
+#include <iomanip>
+#include <sstream>
 
 
 #define __LOOP_CONCAT_INTERNAL(a, b) a ## b
@@ -14,11 +16,25 @@ template <typename T>
 std::string padString(T val, size_t size) {
 	std::string raw = std::to_string(val);
 
-	while (raw.size() != size) {
+	while (raw.size() < size) {
 		raw.insert(0, " ");
 	}
 
 	return raw;
+}
+
+std::string padString(std::string val, size_t size) {
+	while (val.size() < size) {
+		val.insert(0, " ");
+	}
+
+	return val;
+}
+
+std::string round(float val, int place) {
+	std::stringstream st;
+	st << std::fixed << std::setprecision(place) << val;
+	return st.str();
 }
 
 template<typename T, typename U>

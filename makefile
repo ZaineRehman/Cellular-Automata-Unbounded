@@ -15,16 +15,16 @@ all: debug
 run: run_d
 run_d: 
 #ifeq ($(OS), Windows_NT)
-	./bin/Debug/CGOLplus
+	./bin/Debug/CellularAutomataUnbounded
 #else
-#	sudo ./bin/Debug/CGOLplus
+#	sudo ./bin/Debug/CellularAutomataUnbounded
 #endif
 
 run_r: 
 #ifeq ($(OS), Windows_NT)
-	./bin/Release/CGOLplus
+	./bin/Release/CellularAutomataUnbounded
 #else
-#	sudo ./bin/Release/CGOLplus
+#	sudo ./bin/Release/CellularAutomataUnbounded
 #endif
 
 
