@@ -23,7 +23,8 @@ std::string padString(T val, size_t size) {
 	return raw;
 }
 
-std::string padString(std::string val, size_t size) {
+template<>
+inline std::string padString(std::string val, size_t size) {
 	while (val.size() < size) {
 		val.insert(0, " ");
 	}
@@ -31,7 +32,7 @@ std::string padString(std::string val, size_t size) {
 	return val;
 }
 
-std::string round(float val, int place) {
+inline std::string round(float val, int place) {
 	std::stringstream st;
 	st << std::fixed << std::setprecision(place) << val;
 	return st.str();
@@ -43,7 +44,7 @@ bool isIn(const T& item, const U& list) {
 	return false;
 }
 
-std::vector<std::string> splitString(const std::string& str, const std::vector<char>& delim) {
+inline std::vector<std::string> splitString(const std::string& str, const std::vector<char>& delim) {
 	std::vector<std::string> splits{};
 
 	std::string built = "";

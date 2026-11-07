@@ -152,7 +152,7 @@ int main() {
 		// key buffer, not key states
 		SDL_Event event;
 		// desire to change indexed rule
-		int edit_desire = 0;
+		float edit_desire = 0;
 		// mouse position
 		float mouseX, mouseY;
 
@@ -299,11 +299,11 @@ int main() {
 
 							// destroy all of those cells
 							for (Cell& cell : cellMap) {
-								if (cell.state == rules.size()) cell.state = 0;
+								if (cell.state == static_cast<int>(rules.size())) cell.state = 0;
 							}
 
 							// make sure state index isnt out of bounds
-							if (edit_stateIndex >= rules.size()) edit_stateIndex = rules.size()-1;
+							if (edit_stateIndex >= static_cast<int>(rules.size())) edit_stateIndex = rules.size()-1;
 
 							presentRules = true;
 						}
@@ -329,7 +329,7 @@ int main() {
 		}
 
 		// edit rules
-		if (edit_desire != 0) {
+		if (edit_desire != 0.0f) {
 			if (edit_ruleIndex == 0) {  // minToSurvive
 				rules[edit_stateIndex].minToSurvive += edit_desire;
 				clamp(rules[edit_stateIndex].minToSurvive, minRuleVal, maxRuleVal);

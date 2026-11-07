@@ -3,25 +3,20 @@
 #include <vector>
 #include <cmath>
 
+#include "util.hpp"
 #include "sim.hpp"
 
 
-float Neighborhood::standard(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT) {
+float getNeighboringValues(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT, const CellBias& toCheck) {
 	float total = 0;
 
-	static const Point toCheck[] = {
-		{-1, -1}, {-1, 0}, {-1, 1},  // left row
-		{0, -1}, {0, 1},             // middle row
-		{1, -1}, {1, 0}, {1, 1}      // right row
-	};
-
-	for (size_t i = 0; i < 8; ++i) {
+	for (size_t i = 0; i < toCheck.pairs; ++i) {
 		// if cell exists
-		int newY = point.y + toCheck[i].y, newX = point.x + toCheck[i].x;
+		int newY = point.y + toCheck.points[i].first.y, newX = point.x + toCheck.points[i].first.x;
 
 		if (newX >= 0 && newX < static_cast<int>(WIDTH) && newY >= 0 && newY < static_cast<int>(HEIGHT)) {
 			int cstate = cells[newY*static_cast<int>(WIDTH) + newX].state;
-			total += rules.surrounding[cstate];
+			total += rules.surrounding[cstate]*toCheck.points[i].second;
 		} else {
 			// out of bounds
 			total += rules.outOfBounds;
@@ -31,27 +26,24 @@ float Neighborhood::standard(const Point& point, const std::vector<Cell>& cells,
 	return total;
 }
 
-float Neighborhood::sidesBias(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT) {
-	float total = 0;
 
-	static const std::pair<Point, float> toCheck[] = {
-		{{-1, -1}, 0.5f}, {{-1, 0}, 1.5f}, {{-1, 1}, 0.5f},  // left row
-		{{0, -1}, 1.5f}, {{0, 1}, 1.5f},             // middle row
-		{{1, -1}, 0.5f}, {{1, 0}, 1.5f}, {{1, 1}, 0.5f}      // right row
-	};
+CellBias Neighborhood::simple_calc(int n, bool falloff) {
+	CellBias built {{}, 0};
 
-	for (size_t i = 0; i < 8; ++i) {
-		// if cell exists
-		int newY = point.y + toCheck[i].first.y, newX = point.x + toCheck[i].first.x;
-
-		if (newX >= 0 && newX < static_cast<int>(WIDTH) && newY >= 0 && newY < static_cast<int>(HEIGHT)) {
-			int cstate = cells[newY*static_cast<int>(WIDTH) + newX].state;
-			total += rules.surrounding[cstate]*toCheck[i].second;
-		} else {
-			// out of bounds
-			total += rules.outOfBounds;
+	for (int y = -n; y <= n; ++y) {
+		for (int x = -n; x <= n; ++x) {
+			if (y == 0 && x == 0) continue;
+			built.points.push_back({{x,y}, falloff ? 0.5f*n*abs(min(y,x)) : 1.0f});
+			built.pairs++;
 		}
 	}
 
-	return total;
+	return built;
 }
+
+
+//static const CellBias toCheck = {
+//	{{-1, -1}, 0.5f}, {{-1, 0}, 1.5f}, {{-1, 1}, 0.5f},  // left row
+//	{{0, -1}, 1.5f}, {{0, 1}, 1.5f},                     // middle row
+//	{{1, -1}, 0.5f}, {{1, 0}, 1.5f}, {{1, 1}, 0.5f}      // right row
+//};

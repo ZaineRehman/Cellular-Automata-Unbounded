@@ -28,7 +28,7 @@ void doCellCalc(
 			if (c.state != 0) {
 				const Rules& local = rules[c.state];
 				// get surrounding cell outcome
-				float outcome = Neighborhood::sidesBias(point, cellMap, local, cellsWidth, cellsHeight);
+				float outcome = getNeighboringValues(point, cellMap, local, cellsWidth, cellsHeight, Neighborhood::moores);
 
 				if (outcome < local.minToSurvive) {
 					// lower state
@@ -37,13 +37,13 @@ void doCellCalc(
 					// raise state
 					newMap[y*cellsWidth + x].state++;
 					// state too big? kill it
-					if (newMap[y*cellsWidth + x].state == rules.size()) {
+					if (newMap[y*cellsWidth + x].state == static_cast<int>(rules.size())) {
 						newMap[y*cellsWidth + x].state = 0;
 					}
 				}
 			} else {
 				// no cell, check if life
-				float outcome = Neighborhood::sidesBias(point, cellMap, rules[0], cellsWidth, cellsHeight);
+				float outcome = getNeighboringValues(point, cellMap, rules[0], cellsWidth, cellsHeight, Neighborhood::moores);
 
 				// cells regenerate preferring higher states
 				for (size_t r = 1; r < rules.size(); ++r) {

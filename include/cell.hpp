@@ -1,7 +1,6 @@
 #pragma once
 
-#include <iostream>
-//#include <unordered_map>
+#include <vector>
 
 
 struct Point {
@@ -20,6 +19,12 @@ struct Point {
 		return Point{x+other.x, y+other.y};
 	}
 };
+
+struct CellBias {
+	std::vector<std::pair<Point, float>> points;
+	size_t pairs;
+};
+
 
 // custom hash function for Point
 /*template <>
@@ -51,11 +56,15 @@ public:
 
 #include "sim.hpp"
 
-// functions to return the value of surrounding cells
+float getNeighboringValues(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT, const CellBias& toCheck);
+
+// points to check to return the value of surrounding cells (getNeighboringValues)
 namespace Neighborhood {
 	// standard surrounding
-	float standard(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT);
+	CellBias simple_calc(int n, bool falloff);
 
-	// diagonals unweighted, sides weighted
-	float sidesBias(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT);
+	inline CellBias moores = simple_calc(1,false);
+
+	// diagonals weighted less, sides weighted more
+	
 }
