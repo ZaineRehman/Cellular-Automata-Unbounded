@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <iomanip>  // remove after debugging?
+#include <iostream>  // ^^^
 
 
 struct Point {
@@ -24,6 +26,16 @@ struct CellBias {
 	std::vector<std::pair<Point, float>> points;
 	size_t pairs;
 };
+
+inline void outputCellBias(const CellBias& cb) {
+	std::cout << std::fixed << std::setprecision(2);
+
+	std::cout << "{";
+	for (auto& i : cb.points) {
+		std::cout << "\t(" << i.first.x << "," << i.first.y << "), " << i.second << "\n";
+	}
+	std::cout << "}\n";
+}
 
 
 // custom hash function for Point
@@ -61,10 +73,22 @@ float getNeighboringValues(const Point& point, const std::vector<Cell>& cells, c
 // points to check to return the value of surrounding cells (getNeighboringValues)
 namespace Neighborhood {
 	// standard surrounding
-	CellBias simple_calc(int n, bool falloff);
+	CellBias simple_calc(int n, bool falloff, float vmax = 1.0f, float vmin = 0.5f);
+	// ignore diagonals
+	CellBias vonNeumann_calc(int n, bool falloff);
+	// bias sides 1.5x more, diagonals 1.5x less
+	CellBias carved_calc(int n, bool falloff);
 
-	inline CellBias moores = simple_calc(1,false);
+	// standard Moore Neighborhood
+	inline CellBias moore = simple_calc(1,false);
+	// standard falloff, n=2
+	inline CellBias falloff2 = simple_calc(2,true);
+	// standard falloff, weighted less, n=2
+	inline CellBias falloff2_less = simple_calc(2,true, 1.0f, 0.25f);
 
-	// diagonals weighted less, sides weighted more
+	// standard Von Neumann neighborhood
+	inline CellBias vonNeumann = vonNeumann_calc(2, false);
 	
+	// sides are biased higher than diagonals, n=1
+	inline CellBias carved = carved_calc(1,true);
 }

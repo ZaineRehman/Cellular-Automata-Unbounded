@@ -16,7 +16,8 @@ void doCellCalc(
 	const std::vector<Cell>& cellMap, std::vector<Cell>& newMap, 
 	const std::vector<Rules>& rules, const std::vector<RGBA_t>& stateColors, 
 	std::vector<RGBA_t>& screen, 
-	size_t pixelsPerCell, size_t WIDTH, size_t HEIGHT
+	size_t pixelsPerCell, size_t WIDTH, size_t HEIGHT, 
+	const CellBias& neighborhoodType
 ) {
 	for (size_t y = yStart; y < yEnd; ++y) {
 		for (size_t x = xStart; x < xEnd; ++x) {
@@ -28,7 +29,7 @@ void doCellCalc(
 			if (c.state != 0) {
 				const Rules& local = rules[c.state];
 				// get surrounding cell outcome
-				float outcome = getNeighboringValues(point, cellMap, local, cellsWidth, cellsHeight, Neighborhood::moores);
+				float outcome = getNeighboringValues(point, cellMap, local, cellsWidth, cellsHeight, neighborhoodType);
 
 				if (outcome < local.minToSurvive) {
 					// lower state
@@ -43,8 +44,7 @@ void doCellCalc(
 				}
 			} else {
 				// no cell, check if life
-				float outcome = getNeighboringValues(point, cellMap, rules[0], cellsWidth, cellsHeight, Neighborhood::moores);
-
+				float outcome = getNeighboringValues(point, cellMap, rules[0], cellsWidth, cellsHeight, neighborhoodType);
 				// cells regenerate preferring higher states
 				for (size_t r = 1; r < rules.size(); ++r) {
 					if (rules[r].minForReproduction <= outcome && outcome <= rules[r].maxForReproduction) {

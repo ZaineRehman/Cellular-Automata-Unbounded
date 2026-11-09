@@ -27,13 +27,53 @@ float getNeighboringValues(const Point& point, const std::vector<Cell>& cells, c
 }
 
 
-CellBias Neighborhood::simple_calc(int n, bool falloff) {
+CellBias Neighborhood::simple_calc(int n, bool falloff, float vmax, float vmin) {
+	if (n == 1) falloff = false;
+
 	CellBias built {{}, 0};
 
 	for (int y = -n; y <= n; ++y) {
 		for (int x = -n; x <= n; ++x) {
 			if (y == 0 && x == 0) continue;
-			built.points.push_back({{x,y}, falloff ? 0.5f*n*abs(min(y,x)) : 1.0f});
+
+			built.points.push_back({{x,y}, falloff ? vmin + ((vmax-vmin)/(n-1.0f))*(n-max(abs(x),abs(y))) : 1.0f});
+			built.pairs++;
+		}
+	}
+
+	return built;
+}
+
+CellBias Neighborhood::vonNeumann_calc(int n, bool falloff) {
+	if (n == 1) falloff = false;
+	
+	CellBias built {{}, 0};
+
+	for (int y = -n; y <= n; ++y) {
+		for (int x = -n; x <= n; ++x) {
+			if (!(y == 0 || x == 0)) continue;
+			if (y == 0 && x == 0) continue;
+
+			built.points.push_back({{x,y}, falloff ? 1.5f - 0.5f*(n-1.0f)*max(abs(x),abs(y)) : 1.0f});
+			built.pairs++;
+		}
+	}
+
+	return built;
+}
+
+CellBias Neighborhood::carved_calc(int n, bool falloff) {
+	if (n == 1) falloff = false;
+
+	CellBias built {{}, 0};
+
+	for (int y = -n; y <= n; ++y) {
+		for (int x = -n; x <= n; ++x) {
+			if (y == 0 && x == 0) continue;
+
+			float bias = (y == 0 || x == 0) ? 1.5f : 0.5f;
+
+			built.points.push_back({{x,y}, (falloff ? (1.5f - 0.5f*(n-1.0f)*max(abs(x),abs(y))) : 1.0f) * bias});
 			built.pairs++;
 		}
 	}

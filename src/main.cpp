@@ -4,9 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <vector>
-#include <format>
 #include <string>
-//#include <iomanip>  // std::setprecision
 
 #include <SDL3/SDL.h>
 
@@ -31,6 +29,16 @@ const Rules defaultCgol {2.0f,4.0f,  3.0f,3.0f,  0.0f,  {}};
 
 
 int main() {
+	if (0) {
+		outputCellBias(Neighborhood::moore);
+		outputCellBias(Neighborhood::falloff2);
+		outputCellBias(Neighborhood::falloff2_less);
+		outputCellBias(Neighborhood::vonNeumann);
+		outputCellBias(Neighborhood::carved);
+
+		return 0;
+	}
+
 	srand(time(0));
 
 	//std::cout << std::setprecision(1);
@@ -69,7 +77,10 @@ int main() {
 		RGBA_t{255, 255, 255, 255}, 
 	};
 
-	bool paused = false;
+	// -1 = unpaused
+	//  0 = paused
+	//  n = move forward n generations
+	int paused = -1;
 
 	// delay for cell calc per frame
 	int frameDelay = 0;
@@ -156,23 +167,26 @@ int main() {
 		// mouse position
 		float mouseX, mouseY;
 
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_EVENT_QUIT) {
-				RUNNING = false;
-			}
-			else if (event.type ==  SDL_EVENT_MOUSE_BUTTON_DOWN) {  // place cell
-				if (paused) {
-					SDL_GetMouseState(&mouseX, &mouseY);
-					if (mouseX >= 0 && mouseX < WIDTH && mouseY >= 0 && mouseY < HEIGHT) {
-						// add to both cellMap AND render
+		// we gonna do mouse first lol
+		uint32_t mouseState = SDL_GetMouseState(&mouseX, &mouseY);
+		if (mouseState & SDL_BUTTON_LMASK) {
+			if (paused == 0 || 1) {  // no longer care about paused
+				if (mouseX >= 0 && mouseX < WIDTH && mouseY >= 0 && mouseY < HEIGHT) {
+					int mouseRelX = mouseX / pixelsPerCell;
+					int mouseRelY = mouseY / pixelsPerCell;
 
-						for (size_t py = 0; py < pixelsPerCell; ++py) {
-							for (size_t px = 0; px < pixelsPerCell; ++px) {
-								screen[(pixelsPerCell*mouseY+py)*WIDTH + (pixelsPerCell*mouseX+px)] = stateColors[newMap[mouseY*cellsWidth + mouseX].state];
-							}
+					for (size_t py = 0; py < pixelsPerCell; ++py) {
+						for (size_t px = 0; px < pixelsPerCell; ++px) {
+							cellMap[mouseRelY*cellsWidth + mouseRelX].state = rules.size()-1;
 						}
 					}
 				}
+			}
+		}
+		
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_EVENT_QUIT) {
+				RUNNING = false;
 			}
 			else if (event.type == SDL_EVENT_KEY_DOWN) {
 				switch (event.key.key) {
@@ -238,7 +252,11 @@ int main() {
 						break;
 					
 					case SDLK_SPACE:  // pause
-						paused = !paused;
+						paused = paused == -1 ? 0 : -1;
+						break;
+					
+					case SDLK_L:  // advance one generation
+						if (paused == 0) paused = 1;
 						break;
 					
 					case SDLK_LEFTBRACKET:  // decrease frame delay
@@ -356,7 +374,7 @@ int main() {
 
 		// TODO optimize checks
 
-		if (frameDelay == 0 && !paused) {
+		if (frameDelay == 0 && paused != 0) {
 			std::vector<std::thread> threads {};
 
 			// chunks are vertical slices
@@ -376,13 +394,32 @@ int main() {
 					std::ref(screen), 
 					pixelsPerCell, 
 					WIDTH, 
-					HEIGHT
+					HEIGHT, 
+					Neighborhood::moore
 				));
 			}
 
 			for (std::thread& t : threads) t.join();
 
 			cellMap.swap(newMap);
+
+			if (paused > 0) paused--;
+		} else if (paused == 0) {
+			// only calculate render
+			// TODO put in function, same as in doCellCalc()
+			for (size_t y = 0; y < cellsHeight; ++y) {
+				for (size_t x = 0; x < cellsWidth; ++x) {
+					for (size_t py = 0; py < pixelsPerCell; ++py) {
+						for (size_t px = 0; px < pixelsPerCell; ++px) {
+							// px = 0,  py = 0
+							// x = 999,  y = 330
+							// cellsWidth = 333,  cellsHeight = 333
+							// CRASH
+							screen[(pixelsPerCell*y+py)*WIDTH + (pixelsPerCell*x+px)] = stateColors[cellMap[y*cellsWidth + x].state];
+						}
+					}
+				}
+			}
 		}
 
 		renderer.render(screen);

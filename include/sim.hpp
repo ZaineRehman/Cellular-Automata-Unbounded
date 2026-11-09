@@ -39,7 +39,8 @@ void doCellCalc(
 	const std::vector<Cell>& cellMap, std::vector<Cell>& newMap, 
 	const std::vector<Rules>& rules, const std::vector<RGBA_t>& stateColors, 
 	std::vector<RGBA_t>& screen, 
-	size_t pixelsPerCell, size_t WIDTH, size_t HEIGHT
+	size_t pixelsPerCell, size_t WIDTH, size_t HEIGHT, 
+	const CellBias& neighborhoodType
 );
 
 
