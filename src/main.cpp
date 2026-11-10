@@ -1,10 +1,11 @@
 #include <iostream>
-#include <unordered_map>
-#include <unordered_set>
 #include <chrono>
 #include <thread>
 #include <vector>
 #include <string>
+#include <cmath>
+//#include <unordered_map>
+//#include <unordered_set>
 
 #include <SDL3/SDL.h>
 
@@ -93,6 +94,15 @@ int main() {
 	// which specific rule
 	int edit_ruleIndex = 0;
 
+	// radius of mouse press
+	// 0 = point
+	int mouseRadius = 1;
+	// mouse press fillin method
+	// 0 = highest state
+	// 1 = random states, no empty
+	// 2 = random states, with empty
+	int mouseFillMethod = 0;
+
 	std::string 
 		ansi_reset = "\033[0m", 
 		ansi_red = "\033[91m", 
@@ -123,6 +133,11 @@ int main() {
 			system("cls");
 
 			// output rules
+
+			std::cout
+				<< "[Arrows] to select rule, [+],[-] to change value\nKeypad [+],[-] changes by 0.1\n[Q][W][E],[A][S][D] to change color\n\n"
+				<< "          SURVIVAL    REPRODUCE  BOUNDS   SURROUNDINGS" << '\n'
+				<< "          min  max    min  max                         " << '\n';
 			for (size_t ri = 0; ri < rules.size(); ++ri) {
 				std::cout 
 					<< "State " << ri << ": "
@@ -143,8 +158,12 @@ int main() {
 					<< ansi_green << padString(stateColors[ri].g, 3) << ansi_reset << " "
 					<< ansi_blue  << padString(stateColors[ri].b, 3) << ansi_reset << "]\n";
 			}
+			std::cout
+				<< "\n[O],[P] Mouse radius: " << mouseRadius << '\n'
+				<<   "[U],[I] Mouse fill method: " << mouseFillMethod << '\n'
+				<< "\n[<],[>] Pixels per cell: " << pixelsPerCell << '\n';
 
-			/* TODO look into why this crashes
+			/* T.ODO look into why this crashes
 			for (size_t ri = 0; ri < rules.size(); ++ri) {
 				std::cout
 					<< "State " << ri << ":"
@@ -169,18 +188,52 @@ int main() {
 
 		// we gonna do mouse first lol
 		uint32_t mouseState = SDL_GetMouseState(&mouseX, &mouseY);
-		if (mouseState & SDL_BUTTON_LMASK) {
+		if (mouseState & SDL_BUTTON_LMASK || mouseState & SDL_BUTTON_RMASK) {
 			if (paused == 0 || 1) {  // no longer care about paused
 				if (mouseX >= 0 && mouseX < WIDTH && mouseY >= 0 && mouseY < HEIGHT) {
 					int mouseRelX = mouseX / pixelsPerCell;
 					int mouseRelY = mouseY / pixelsPerCell;
 
-					for (size_t py = 0; py < pixelsPerCell; ++py) {
-						for (size_t px = 0; px < pixelsPerCell; ++px) {
-							cellMap[mouseRelY*cellsWidth + mouseRelX].state = rules.size()-1;
+					// radius
+
+					if(mouseRadius == 0) {
+						for (size_t py = 0; py < pixelsPerCell; ++py) {
+							for (size_t px = 0; px < pixelsPerCell; ++px) {
+								int newState = 0;
+								if (mouseFillMethod == 0) newState = rules.size()-1;
+								else if (mouseFillMethod == 1) newState = rand() % (rules.size()-1) + 1;
+								else if (mouseFillMethod == 2) newState = rand() % rules.size();
+
+								cellMap[mouseRelY*cellsWidth + mouseRelX].state = newState;
+							}
 						}
 					}
-				}
+
+					// these are poorly named :)
+					for (int minRadY = -mouseRadius; minRadY <= mouseRadius; ++minRadY) {
+						for (int minRadX = -mouseRadius; minRadX <= mouseRadius; ++minRadX) {
+							if (
+								// no static_cast, sue me
+								(mouseRelY+minRadY) >= 0 && (mouseRelY+minRadY) < (int)cellsHeight 
+								&& (mouseRelX+minRadX) >= 0 && (mouseRelX+minRadX) < (int)cellsWidth  // screen bounds
+								&& sqrt(pow(minRadX,2) + pow(minRadY,2)) <= (float)mouseRadius        // radius bounds
+							) {
+								// repeated code
+								for (size_t py = 0; py < pixelsPerCell; ++py) {
+									for (size_t px = 0; px < pixelsPerCell; ++px) {
+										int newState = 0;
+										if (mouseState & SDL_BUTTON_RMASK);
+										else if (mouseFillMethod == 0) newState = rules.size()-1;
+										else if (mouseFillMethod == 1) newState = rand() % (rules.size()-1) + 1;
+										else if (mouseFillMethod == 2) newState = rand() % rules.size();
+
+										cellMap[(mouseRelY+minRadY)*cellsWidth + (mouseRelX+minRadX)].state = newState;
+									}
+								}
+							}
+						}
+					}
+				}  // yikes, you could get lost in these
 			}
 		}
 		
@@ -254,9 +307,33 @@ int main() {
 					case SDLK_SPACE:  // pause
 						paused = paused == -1 ? 0 : -1;
 						break;
-					
 					case SDLK_L:  // advance one generation
 						if (paused == 0) paused = 1;
+						break;
+					case SDLK_C:  // clear
+						for (size_t i = 0; i < cellMap.size(); ++i) {
+							cellMap[i].state = 0;
+						}
+						break;
+
+					case SDLK_O:  // decease mouse radius
+						mouseRadius--;
+						if (mouseRadius == -1) mouseRadius = 0;
+						presentRules = true;
+						break;
+					case SDLK_P:  // increase mouse radius
+						mouseRadius++;
+						presentRules = true;
+						break;
+					case SDLK_U:  // decrease mouse fill method
+						mouseFillMethod--;
+						clamp(mouseFillMethod, 0, 2);
+						presentRules = true;
+						break;
+					case SDLK_I:  // increase mouse fill method
+						mouseFillMethod++;
+						clamp(mouseFillMethod, 0, 2);
+						presentRules = true;
 						break;
 					
 					case SDLK_LEFTBRACKET:  // decrease frame delay
@@ -289,6 +366,11 @@ int main() {
 						newMap.resize(cellsWidth*cellsHeight);
 						newMap.assign(cellsWidth*cellsHeight, Cell{0});
 
+						// black screen
+						for (size_t s = 0; s < screen.size(); ++s) screen[s] = RGBA_t{0,0,0,255};
+
+						presentRules = true;
+
 						break;
 					case SDLK_PERIOD:  // increment cell pixel size
 						clamp(++pixelsPerCell, (size_t)1, (size_t)16);
@@ -302,6 +384,11 @@ int main() {
 						newMap.clear();
 						newMap.resize(cellsWidth*cellsHeight);
 						newMap.assign(cellsWidth*cellsHeight, Cell{0});
+
+						// black screen
+						for (size_t s = 0; s < screen.size(); ++s) screen[s] = RGBA_t{0,0,0,255};
+
+						presentRules = true;
 
 						break;
 					
