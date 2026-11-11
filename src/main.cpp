@@ -137,7 +137,7 @@ int main() {
 			std::cout
 				<< "[Arrows] to select rule, [+],[-] to change value\nKeypad [+],[-] changes by 0.1\n[Q][W][E],[A][S][D] to change color\n\n"
 				<< "          SURVIVAL    REPRODUCE  BOUNDS   SURROUNDINGS" << '\n'
-				<< "          min  max    min  max                         " << '\n';
+				<< "          min  lim    min  max                         " << '\n';
 			for (size_t ri = 0; ri < rules.size(); ++ri) {
 				std::cout 
 					<< "State " << ri << ": "
@@ -438,6 +438,7 @@ int main() {
 			if (edit_ruleIndex == 0) {  // minToSurvive
 				rules[edit_stateIndex].minToSurvive += edit_desire;
 				clamp(rules[edit_stateIndex].minToSurvive, minRuleVal, maxRuleVal);
+				// std::round(value * 10.0f) / 10.0f;
 			} else if (edit_ruleIndex == 1) {  // minToDie
 				rules[edit_stateIndex].minToDie += edit_desire;
 				clamp(rules[edit_stateIndex].minToDie, minRuleVal, maxRuleVal);
