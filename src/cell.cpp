@@ -3,20 +3,21 @@
 #include <vector>
 #include <cmath>
 
+#include "settings.hpp"
 #include "util.hpp"
 #include "sim.hpp"
 
 
-float getNeighboringValues(const Point& point, const std::vector<Cell>& cells, const Rules& rules, size_t WIDTH, size_t HEIGHT, const CellBias& toCheck) {
+float getNeighboringValues(const Point& point, const Rules& rules) {
 	float total = 0;
 
-	for (size_t i = 0; i < toCheck.pairs; ++i) {
+	for (size_t i = 0; i < SimState::neighborhoodType.pairs; ++i) {
 		// if cell exists
-		int newY = point.y + toCheck.points[i].first.y, newX = point.x + toCheck.points[i].first.x;
+		int newY = point.y + SimState::neighborhoodType.points[i].first.y, newX = point.x + SimState::neighborhoodType.points[i].first.x;
 
-		if (newX >= 0 && newX < static_cast<int>(WIDTH) && newY >= 0 && newY < static_cast<int>(HEIGHT)) {
-			int cstate = cells[newY*static_cast<int>(WIDTH) + newX].state;
-			total += rules.surrounding[cstate]*toCheck.points[i].second;
+		if (newX >= 0 && newX < static_cast<int>(SimState::cellsWidth) && newY >= 0 && newY < static_cast<int>(SimState::cellsHeight)) {
+			int cstate = SimState::cellMap[newY*static_cast<int>(SimState::cellsWidth) + newX].state;
+			total += rules.surrounding[cstate]*SimState::neighborhoodType.points[i].second;
 		} else {
 			// out of bounds
 			total += rules.outOfBounds;

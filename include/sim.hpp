@@ -5,7 +5,7 @@
 #include "render.hpp"
 
 
-// rules for a given cell state
+// SimState::rules for a given cell state
 struct Rules {
 	// minimum surrounding to survivwe
 	float minToSurvive;
@@ -34,13 +34,7 @@ struct Rules {
 // cell calculation
 void doCellCalc(
 	size_t yStart, size_t yEnd, 
-	size_t xStart, size_t xEnd, 
-	size_t cellsHeight, size_t cellsWidth, 
-	const std::vector<Cell>& cellMap, std::vector<Cell>& newMap, 
-	const std::vector<Rules>& rules, const std::vector<RGBA_t>& stateColors, 
-	std::vector<RGBA_t>& screen, 
-	size_t pixelsPerCell, size_t WIDTH, size_t HEIGHT, 
-	const CellBias& neighborhoodType
+	size_t xStart, size_t xEnd
 );
 
 
