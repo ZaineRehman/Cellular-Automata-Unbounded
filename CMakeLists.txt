@@ -25,6 +25,7 @@ add_executable(CellularAutomataUnbounded
 	${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/cell.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/sim.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/src/input.cpp
 )
 
 
