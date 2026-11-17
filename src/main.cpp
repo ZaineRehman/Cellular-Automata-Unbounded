@@ -63,38 +63,73 @@ int main() {
 		if (SimState::presentRules) {
 			system("cls");
 
-			// output SimState::rules
+			// output rules
 
-			std::cout
-				<< "[Arrows] to select rule, [+],[-] to change value\nKeypad [+],[-] changes by 0.1\n[Q][W][E],[A][S][D] to change color\n\n"
-				<< "          SURVIVAL    REPRODUCE  BOUNDS   SURROUNDINGS" << '\n'
-				<< "          min  lim    min  max                         " << '\n';
-			for (size_t ri = 0; ri < SimState::rules.size(); ++ri) {
-				std::cout 
-					<< "State " << ri << ": "
-					<< getPresentColor(ri, 0) << padString(round(SimState::rules[ri].minToSurvive, 1), 4) << ansi_reset << ","
-					<< getPresentColor(ri, 1) << padString(round(SimState::rules[ri].minToDie, 1), 4) << ansi_reset << " ~ "
-					<< getPresentColor(ri, 2) << padString(round(SimState::rules[ri].minForReproduction, 1), 4) << ansi_reset << ","
-					<< getPresentColor(ri, 3) << padString(round(SimState::rules[ri].maxForReproduction, 1), 4) << ansi_reset << " ~ "
-					<< getPresentColor(ri, 4) << padString(round(SimState::rules[ri].outOfBounds, 1), 4) << ansi_reset << " {";
-				for (size_t si = 0; si < SimState::rules[ri].surrounding.size(); ++si) {
+			if (SimState::simMode == 0) {
+				std::cout
+					<< "[Arrows] to select rule, [+],[-] to change value\nKeypad [+],[-] changes by 0.1\n[Q][W][E],[A][S][D] to change color\n\n"
+					<< "          SURVIVAL    REPRODUCE  BOUNDS   SURROUNDINGS" << '\n'
+					<< "          min  lim    min  max                         " << '\n';
+				for (size_t ri = 0; ri < SimState::rules.size(); ++ri) {
+					Rules thisRule = SimState::rules[ri];
 					std::cout 
-						<< getPresentColor(ri, 5 + si) 
-						<< padString(round(SimState::rules[ri].surrounding[si], 1), 4) 
-						<< ansi_reset << (si == SimState::rules[ri].surrounding.size()-1 ? "}  [": ",");
+						<< "State " << ri << ": "
+						<< getPresentColor(ri, 0) << padString(round(thisRule.minToSurvive, 1), 4) << ansi_reset << ","
+						<< getPresentColor(ri, 1) << padString(round(thisRule.minToDie, 1), 4) << ansi_reset << " ~ "
+						<< getPresentColor(ri, 2) << padString(round(thisRule.minForReproduction, 1), 4) << ansi_reset << ","
+						<< getPresentColor(ri, 3) << padString(round(thisRule.maxForReproduction, 1), 4) << ansi_reset << " ~ "
+						<< getPresentColor(ri, 4) << padString(round(thisRule.outOfBounds, 1), 4) << ansi_reset << " {";
+					for (size_t si = 0; si < thisRule.surrounding.size(); ++si) {
+						std::cout 
+							<< getPresentColor(ri, 5 + si) 
+							<< padString(round(thisRule.surrounding[si], 1), 4) 
+							<< ansi_reset << (si == thisRule.surrounding.size()-1 ? "}  [": ",");
+					}
+					// color
+					std::cout 
+						<< ansi_red   << padString(SimState::stateColors[ri].r, 3) << ansi_reset << " "
+						<< ansi_green << padString(SimState::stateColors[ri].g, 3) << ansi_reset << " "
+						<< ansi_blue  << padString(SimState::stateColors[ri].b, 3) << ansi_reset << "]\n";
 				}
-				// color
-				std::cout 
-					<< ansi_red   << padString(SimState::stateColors[ri].r, 3) << ansi_reset << " "
-					<< ansi_green << padString(SimState::stateColors[ri].g, 3) << ansi_reset << " "
-					<< ansi_blue  << padString(SimState::stateColors[ri].b, 3) << ansi_reset << "]\n";
+			} else if (SimState::simMode == 1) {
+				std::cout
+					<< "[Arrows] to select rule, [0]-[9] or [+],[-]to change value\n[Q][W][E],[A][S][D] to change color\n";
+				for (size_t ri = 0; ri < SimState::rules.size(); ++ri) {
+					Rules thisRule = SimState::rules[ri];
+
+					// output birth values
+					std::cout << getPresentColor(ri, 0) << "B";
+					for (size_t sb = 0; sb < thisRule.sv_birthValues.size(); ++sb) {
+						std::cout << getPresentColor(ri, 0) << thisRule.sv_birthValues[sb] << ansi_reset;
+					}
+
+					// output survival values
+					std::cout << "/" << getPresentColor(ri, 1) << "S";
+					for (size_t sb = 0; sb < thisRule.sv_survivalValues.size(); ++sb) {
+						std::cout << getPresentColor(ri, 1) << thisRule.sv_survivalValues[sb] << ansi_reset;
+					}
+
+					// output surrounding values
+					std::cout << ansi_reset << " {";
+					for (size_t si = 0; si < thisRule.sv_surrounding.size(); ++si) {
+						std::cout 
+							<< getPresentColor(ri, 2 + si) 
+							<< padString(thisRule.sv_surrounding[si], 2) 
+							<< ansi_reset << (si == thisRule.sv_surrounding.size()-1 ? "}  [": ",");
+					}
+					// color
+					std::cout 
+						<< ansi_red   << padString(SimState::stateColors[ri].r, 3) << ansi_reset << " "
+						<< ansi_green << padString(SimState::stateColors[ri].g, 3) << ansi_reset << " "
+						<< ansi_blue  << padString(SimState::stateColors[ri].b, 3) << ansi_reset << "]\n";
+				}
 			}
 			std::cout
 				<< "\n[O],[P] Mouse radius: " << SimState::mouseRadius << '\n'
 				<<   "[U],[I] Mouse fill method: " << SimState::mouseFillMethod << '\n'
 				<< "\n[<],[>] Pixels per cell: " << SimState::pixelsPerCell << '\n';
 
-			/* T.ODO look into why this crashes
+			/* TODO look into why this crashes
 			for (size_t ri = 0; ri < SimState::rules.size(); ++ri) {
 				std::cout
 					<< "State " << ri << ":"

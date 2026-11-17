@@ -13,12 +13,15 @@ struct SimState {
 	inline static const float maxRuleVal = 16.0f;
 
 	// default CGOL
-	inline static const Rules defaultCgol {2.0f,4.0f,  3.0f,3.0f,  0.0f,  {}};
+	inline static const Rules defaultCgol {2.0f, 4.0f, 3.0f, 3.0f, 0.0f, {0.0f}};
 
 	inline static size_t screenWidth = 1000;
 	inline static size_t screenHeight = 1000;
+
 	inline static double fps = 60.0;
+	
 	inline static size_t numThreads = 16;
+	
 	inline static size_t pixelsPerCell = 3;
 
 	inline static bool presentRules = true;

@@ -68,7 +68,7 @@ public:
 
 #include "sim.hpp"
 
-float getNeighboringValues(const Point& point, const Rules& rules) ;
+float getNeighboringValues(const Point& point, const Rules& rules);
 
 // points to check to return the value of surrounding cells (getNeighboringValues)
 namespace Neighborhood {

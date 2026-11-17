@@ -39,7 +39,7 @@ inline std::string round(float val, int place) {
 }
 
 template<typename T, typename U>
-bool isIn(const T& item, const U& list) {
+bool isIn(const T& list, const U& item) {
 	for (const auto& i : list) if (i == item) return true;
 	return false;
 }
@@ -49,7 +49,7 @@ inline std::vector<std::string> splitString(const std::string& str, const std::v
 
 	std::string built = "";
 	for (size_t i = 0; i < str.size(); ++i) {
-		if (isIn(str[i], delim)) {
+		if (isIn(delim, str[i])) {
 			splits.push_back(built);
 			built = "";
 		} else {

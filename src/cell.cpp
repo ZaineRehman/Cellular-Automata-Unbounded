@@ -13,11 +13,17 @@ float getNeighboringValues(const Point& point, const Rules& rules) {
 
 	for (size_t i = 0; i < SimState::neighborhoodType.pairs; ++i) {
 		// if cell exists
-		int newY = point.y + SimState::neighborhoodType.points[i].first.y, newX = point.x + SimState::neighborhoodType.points[i].first.x;
+		int newY = point.y + SimState::neighborhoodType.points[i].first.y, 
+			newX = point.x + SimState::neighborhoodType.points[i].first.x;
 
 		if (newX >= 0 && newX < static_cast<int>(SimState::cellsWidth) && newY >= 0 && newY < static_cast<int>(SimState::cellsHeight)) {
+			// in bounds
 			int cstate = SimState::cellMap[newY*static_cast<int>(SimState::cellsWidth) + newX].state;
-			total += rules.surrounding[cstate]*SimState::neighborhoodType.points[i].second;
+			if (SimState::simMode == 0) {
+				total += rules.surrounding[cstate]*SimState::neighborhoodType.points[i].second;
+			} else {
+				total += static_cast<float>(rules.sv_surrounding[cstate])*SimState::neighborhoodType.points[i].second;
+			}
 		} else {
 			// out of bounds
 			total += rules.outOfBounds;

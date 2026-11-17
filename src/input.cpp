@@ -2,9 +2,12 @@
 
 //#include <SDL3/SDL.h>
 #include <cmath>
+#include <algorithm>
 
 #include "settings.hpp"
 #include "util.hpp"
+#include "sim.hpp"
+
 
 void Inputs::handleMouseEvents(float& mouseX, float& mouseY, uint32_t& mouseState) {
 	if (mouseState & SDL_BUTTON_LMASK || mouseState & SDL_BUTTON_RMASK) {
@@ -64,7 +67,7 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_EVENT_QUIT) {
-			SimState::running = false;
+			SimState::presentRules = false;
 		}
 		else if (event.type == SDL_EVENT_KEY_DOWN) {
 			switch (event.key.key) {
@@ -75,58 +78,97 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 				
 				case SDLK_UP: 
 					clamp_rollover(--SimState::edit_stateIndex, 0, static_cast<int>(SimState::rules.size()-1));
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				case SDLK_DOWN: 
 					clamp_rollover(++SimState::edit_stateIndex, 0, static_cast<int>(SimState::rules.size()-1));
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
-				case SDLK_LEFT: 
-					clamp_rollover(--SimState::edit_ruleIndex, 0, static_cast<int>(SimState::rules.size()+4));
-					SimState::running = true;
+				case SDLK_LEFT: {
+					int max = static_cast<int>(SimState::rules.size()+4);
+					if (SimState::simMode == 1) max -= 2;
+
+					clamp_rollover(--SimState::edit_ruleIndex, 0, max);
+					SimState::presentRules = true;
 					break;
-				case SDLK_RIGHT: 
-					clamp_rollover(++SimState::edit_ruleIndex, 0, static_cast<int>(SimState::rules.size()+4));
-					SimState::running = true;
+				}
+				case SDLK_RIGHT: {
+					int max = static_cast<int>(SimState::rules.size()+4);
+					if (SimState::simMode == 1) max -= 2;
+
+					clamp_rollover(++SimState::edit_ruleIndex, 0, max);
+					SimState::presentRules = true;
 					break;
+				}
 				
 				case SDLK_MINUS:  // decrement rule value
-					edit_desire = -1;
+					if (SimState::simMode == 0 || SimState::edit_ruleIndex > 2) edit_desire = -1.0f;
 					break;
 				case SDLK_EQUALS:  // increment rule value
-					edit_desire = 1;
+					if (SimState::simMode == 0 || SimState::edit_ruleIndex > 2) edit_desire = 1.0f;
 					break;
 				
 				case SDLK_KP_PLUS: 
-					edit_desire = .1;
+					if (SimState::simMode == 0 || SimState::edit_ruleIndex > 2) edit_desire = .1f;
 					break;
 				case SDLK_KP_MINUS: 
-					edit_desire = -.1;
+					if (SimState::simMode == 0 || SimState::edit_ruleIndex > 2) edit_desire = -.1f;
+					break;
+				
+				case SDLK_0: 
+					if (SimState::simMode == 1) edit_desire = 0.1f;  // turns into 0 when casted
+					break;
+				case SDLK_1: 
+					if (SimState::simMode == 1) edit_desire = 1.0f;
+					break;
+				case SDLK_2: 
+					if (SimState::simMode == 1) edit_desire = 2.0f;
+					break;
+				case SDLK_3: 
+					if (SimState::simMode == 1) edit_desire = 3.0f;
+					break;
+				case SDLK_4: 
+					if (SimState::simMode == 1) edit_desire = 4.0f;
+					break;
+				case SDLK_5: 
+					if (SimState::simMode == 1) edit_desire = 5.0f;
+					break;
+				case SDLK_6: 
+					if (SimState::simMode == 1) edit_desire = 6.0f;
+					break;
+				case SDLK_7: 
+					if (SimState::simMode == 1) edit_desire = 7.0f;
+					break;
+				case SDLK_8: 
+					if (SimState::simMode == 1) edit_desire = 8.0f;
+					break;
+				case SDLK_9: 
+					if (SimState::simMode == 1) edit_desire = 9.0f;
 					break;
 				
 				case SDLK_Q:  // increase red
 					SimState::stateColors[SimState::edit_stateIndex].r = static_cast<uint8_t>(min((int)SimState::stateColors[SimState::edit_stateIndex].r + 16, 255));
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				case SDLK_W:  // increase green
 					SimState::stateColors[SimState::edit_stateIndex].g = static_cast<uint8_t>(min((int)SimState::stateColors[SimState::edit_stateIndex].g + 16, 255));
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				case SDLK_E:  // increase blue
 					SimState::stateColors[SimState::edit_stateIndex].b = static_cast<uint8_t>(min((int)SimState::stateColors[SimState::edit_stateIndex].b + 16, 255));
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				case SDLK_A:  // decrease red
 					SimState::stateColors[SimState::edit_stateIndex].r = static_cast<uint8_t>(max((int)SimState::stateColors[SimState::edit_stateIndex].r - 16, 0));
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				case SDLK_S:  // decrease green
 					SimState::stateColors[SimState::edit_stateIndex].g = static_cast<uint8_t>(max((int)SimState::stateColors[SimState::edit_stateIndex].g - 16, 0));
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				case SDLK_D:  // decrease blue
 					SimState::stateColors[SimState::edit_stateIndex].b = static_cast<uint8_t>(max((int)SimState::stateColors[SimState::edit_stateIndex].b - 16, 0));
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				
 				case SDLK_SPACE:  // pause
@@ -140,25 +182,32 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 						SimState::cellMap[i].state = 0;
 					}
 					break;
+				
+				case SDLK_TAB: 
+					SimState::simMode++;
+					clamp_rollover(SimState::simMode, 0, 1);
+					SimState::edit_ruleIndex = 0;
+					SimState::presentRules = true;
+					break;
 
 				case SDLK_O:  // decease mouse radius
 					SimState::mouseRadius--;
 					if (SimState::mouseRadius == -1) SimState::mouseRadius = 0;
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				case SDLK_P:  // increase mouse radius
 					SimState::mouseRadius++;
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				case SDLK_U:  // decrease mouse fill method
 					SimState::mouseFillMethod--;
 					clamp(SimState::mouseFillMethod, 0, 2);
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				case SDLK_I:  // increase mouse fill method
 					SimState::mouseFillMethod++;
 					clamp(SimState::mouseFillMethod, 0, 2);
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 				
 				case SDLK_LEFTBRACKET:  // decrease frame delay
@@ -194,7 +243,7 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 					// black screen
 					for (size_t s = 0; s < SimState::screen.size(); ++s) SimState::screen[s] = RGBA_t{0,0,0,255};
 
-					SimState::running = true;
+					SimState::presentRules = true;
 
 					break;
 				case SDLK_PERIOD:  // increment cell pixel size
@@ -213,7 +262,7 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 					// black screen
 					for (size_t s = 0; s < SimState::screen.size(); ++s) SimState::screen[s] = RGBA_t{0,0,0,255};
 
-					SimState::running = true;
+					SimState::presentRules = true;
 
 					break;
 				
@@ -225,6 +274,7 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 						// remove reference from surrounding
 						for (Rules& rule : SimState::rules) {
 							rule.surrounding.pop_back();
+							rule.sv_surrounding.pop_back();
 						}
 
 						// destroy all of those cells
@@ -233,26 +283,36 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 						}
 
 						// make sure state index isnt out of bounds
-						if (SimState::edit_stateIndex >= static_cast<int>(SimState::rules.size())) SimState::edit_stateIndex = SimState::rules.size()-1;
+						if (SimState::edit_stateIndex >= static_cast<int>(SimState::rules.size())) {
+							SimState::edit_stateIndex = SimState::rules.size()-1;
+						}
 
-						SimState::running = true;
+						SimState::presentRules = true;
 					}
 
 					break;
 				
 				case SDLK_RETURN:  // add topmost state
-					Rules defaultRuleset {2, 4, 3, 3, 0, {0}};
-					LOOP(SimState::rules.size()-1) defaultRuleset.surrounding.push_back(1);
+					Rules defaultRuleset {2.0f, 4.0f, 3.0f, 3.0f, 0.0f, {0.0f}};
+					LOOP(SimState::rules.size()-1) {
+						defaultRuleset.surrounding.push_back(1.0f);
+						defaultRuleset.sv_surrounding.push_back(1);
+					}
+
+					// default values for set-value mode
+					defaultRuleset.sv_birthValues = {3};
+					defaultRuleset.sv_survivalValues = {2,3};
 
 					SimState::rules.push_back(defaultRuleset);
 					SimState::stateColors.push_back(RGBA_t{255,255,255,255});
 
 					// add surrounding SimState::rules to each state
 					for (Rules& rule : SimState::rules) {
-						rule.surrounding.push_back(1);
+						rule.surrounding.push_back(1.0f);
+						rule.sv_surrounding.push_back(1);
 					}
 
-					SimState::running = true;
+					SimState::presentRules = true;
 					break;
 			}
 		}
@@ -260,27 +320,58 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 
 	// edit SimState::rules
 	if (edit_desire != 0.0f) {
-		if (SimState::edit_ruleIndex == 0) {  // minToSurvive
-			SimState::rules[SimState::edit_stateIndex].minToSurvive += edit_desire;
-			clamp(SimState::rules[SimState::edit_stateIndex].minToSurvive, SimState::minRuleVal, SimState::maxRuleVal);
-			// std::round(value * 10.0f) / 10.0f;
-		} else if (SimState::edit_ruleIndex == 1) {  // minToDie
-			SimState::rules[SimState::edit_stateIndex].minToDie += edit_desire;
-			clamp(SimState::rules[SimState::edit_stateIndex].minToDie, SimState::minRuleVal, SimState::maxRuleVal);
-		} else if (SimState::edit_ruleIndex == 2) {  // minForReproduction
-			SimState::rules[SimState::edit_stateIndex].minForReproduction += edit_desire;
-			clamp(SimState::rules[SimState::edit_stateIndex].minForReproduction, SimState::minRuleVal, SimState::maxRuleVal);
-		} else if (SimState::edit_ruleIndex == 3) {  // maxForReproduction
-			SimState::rules[SimState::edit_stateIndex].maxForReproduction += edit_desire;
-			clamp(SimState::rules[SimState::edit_stateIndex].maxForReproduction, SimState::minRuleVal, SimState::maxRuleVal);
-		} else if (SimState::edit_ruleIndex == 4) {  // outOfBounds
-			SimState::rules[SimState::edit_stateIndex].outOfBounds += edit_desire;
-			clamp(SimState::rules[SimState::edit_stateIndex].outOfBounds, SimState::minRuleVal, SimState::maxRuleVal);
-		} else {  // surrounding SimState::rules
-			SimState::rules[SimState::edit_stateIndex].surrounding[SimState::edit_ruleIndex-5] += edit_desire;
-			clamp(SimState::rules[SimState::edit_stateIndex].surrounding[SimState::edit_ruleIndex-5], SimState::minRuleVal, SimState::maxRuleVal);
+		Rules& ruleToEdit = SimState::rules[SimState::edit_stateIndex];
+
+		if (SimState::simMode == 0) {
+			if (SimState::edit_ruleIndex == 0) {
+				// minToSurvive
+				ruleToEdit.minToSurvive += edit_desire;
+				clamp(ruleToEdit.minToSurvive, SimState::minRuleVal, SimState::maxRuleVal);
+				// std::round(value * 10.0f) / 10.0f;
+			} else if (SimState::edit_ruleIndex == 1) {
+				// minToDie
+				ruleToEdit.minToDie += edit_desire;
+				clamp(ruleToEdit.minToDie, SimState::minRuleVal, SimState::maxRuleVal);
+			} else if (SimState::edit_ruleIndex == 2) {
+				// minForReproduction
+				ruleToEdit.minForReproduction += edit_desire;
+				clamp(ruleToEdit.minForReproduction, SimState::minRuleVal, SimState::maxRuleVal);
+			} else if (SimState::edit_ruleIndex == 3) {
+				// maxForReproduction
+				ruleToEdit.maxForReproduction += edit_desire;
+				clamp(ruleToEdit.maxForReproduction, SimState::minRuleVal, SimState::maxRuleVal);
+			} else if (SimState::edit_ruleIndex == 4) {
+				// outOfBounds
+				ruleToEdit.outOfBounds += edit_desire;
+				clamp(ruleToEdit.outOfBounds, SimState::minRuleVal, SimState::maxRuleVal);
+			} else {
+				// surrounding rules
+				ruleToEdit.surrounding[SimState::edit_ruleIndex-5] += edit_desire;
+				clamp(ruleToEdit.surrounding[SimState::edit_ruleIndex-5], SimState::minRuleVal, SimState::maxRuleVal);
+			}
+		} else if (SimState::simMode == 1) {
+			if (SimState::edit_ruleIndex == 0) {
+				// birth values
+				if (isIn(ruleToEdit.sv_birthValues, (int)edit_desire)) {
+					std::erase(ruleToEdit.sv_birthValues, (int)edit_desire);
+				} else {
+					ruleToEdit.sv_birthValues.push_back((int)edit_desire);
+					std::sort(ruleToEdit.sv_birthValues.begin(), ruleToEdit.sv_birthValues.end());
+				}
+			} else if (SimState::edit_ruleIndex == 1) {
+				// survival values
+				if (isIn(ruleToEdit.sv_survivalValues, (int)edit_desire)) {
+					std::erase(ruleToEdit.sv_survivalValues, (int)edit_desire);
+				} else {
+					ruleToEdit.sv_survivalValues.push_back((int)edit_desire);
+					std::sort(ruleToEdit.sv_survivalValues.begin(), ruleToEdit.sv_survivalValues.end());
+				}
+			} else if (edit_desire <= 1.0f) {
+				ruleToEdit.sv_surrounding[SimState::edit_ruleIndex-3] += (int)edit_desire;
+				clamp(ruleToEdit.sv_surrounding[SimState::edit_ruleIndex-3], (int)SimState::minRuleVal, (int)SimState::maxRuleVal);
+			}
 		}
 
-		SimState::running = true;
+		SimState::presentRules = true;
 	}
 }

@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "settings.hpp"
+#include "util.hpp"
 #include "cell.hpp"
 #include "render.hpp"
 
@@ -26,11 +27,14 @@ void doCellCalc(
 				// get surrounding cell outcome
 				float outcome = getNeighboringValues(point, local);
 
-				if (outcome < local.minToSurvive) {
-					// lower state
+				if (
+					(SimState::simMode == 0 && (outcome < local.minToSurvive)) ||
+					(SimState::simMode == 1 && (!isIn(local.sv_survivalValues, (int)outcome)))
+				) {
+					// not in survival range; lower state
 					SimState::newMap[y*SimState::cellsWidth + x].state--;
-				} else if (outcome >= local.minToDie) {
-					// raise state
+				} else if (SimState::simMode == 0 && outcome >= local.minToDie) {
+					// raise state (only possible in range-based sim mode)
 					SimState::newMap[y*SimState::cellsWidth + x].state++;
 					// state too big? kill it
 					if (SimState::newMap[y*SimState::cellsWidth + x].state == static_cast<int>(SimState::rules.size())) {
@@ -40,11 +44,19 @@ void doCellCalc(
 			} else {
 				// no cell, check if life
 				float outcome = getNeighboringValues(point, SimState::rules[0]);
+				
 				// cells regenerate preferring higher states
 				for (size_t r = 1; r < SimState::rules.size(); ++r) {
-					if (SimState::rules[r].minForReproduction <= outcome && outcome <= SimState::rules[r].maxForReproduction) {
-						// alive!
-						SimState::newMap[y*SimState::cellsWidth + x] = Cell{r};
+					if (SimState::simMode == 0) {
+						if (SimState::rules[r].minForReproduction <= outcome && outcome <= SimState::rules[r].maxForReproduction) {
+							// alive!
+							SimState::newMap[y*SimState::cellsWidth + x] = Cell{r};
+						}
+					} else if (SimState::simMode == 1) {
+						if (isIn(SimState::rules[r].sv_birthValues, (int)outcome)) {
+							// alive!
+							SimState::newMap[y*SimState::cellsWidth + x] = Cell{r};
+						}
 					}
 				}
 			}
