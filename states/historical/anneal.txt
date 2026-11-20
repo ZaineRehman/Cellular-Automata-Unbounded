@@ -1,0 +1,6 @@
+1,2
+
+c https://en.wikipedia.org/wiki/Life-like_cellular_automaton#:~:text=B4678/S35678-,Anneal,-Also%20called%20the
+
+B/S           0.0  -1   0 1     0   0   0
+B4678/S35678  0.0  -1   0 1   255 255 255

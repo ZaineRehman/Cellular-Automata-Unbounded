@@ -1,0 +1,6 @@
+1,2
+
+c https://en.wikipedia.org/wiki/Highlife_(cellular_automaton)
+
+B/S      0.0  -1   0 1     0   0   0
+B36/S23  0.0  -1   0 1   255 255 255

@@ -1,0 +1,7 @@
+
+1,2
+
+c https://en.wikipedia.org/wiki/Day_and_Night_(cellular_automaton)
+
+B/S           0.0  -1   0 1     0   0   0
+B3678/S34678  0.0  -1   0 1   255   0   0

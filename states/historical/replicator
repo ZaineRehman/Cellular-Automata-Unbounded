@@ -1,0 +1,6 @@
+1,2
+
+c https://en.wikipedia.org/wiki/Life-like_cellular_automaton#:~:text=B1357/S1357-,Replicator,-Edward%20Fredkin%27s
+
+B/S          0.0  -1   0 1     0   0   0
+B1357/S1357  0.0  -1   0 1   255 255 255

@@ -1,0 +1,6 @@
+1,2
+
+c https://en.wikipedia.org/wiki/Life-like_cellular_automaton#:~:text=B34/S34-,34%20Life,-Was%20initially%20thought
+
+B/S      0.0  -1   0 1     0   0   0
+B34/S34  0.0  -1   0 1   255 255 255

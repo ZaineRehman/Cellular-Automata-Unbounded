@@ -1,0 +1,6 @@
+1,2
+
+c https://en.wikipedia.org/wiki/Life-like_cellular_automaton#:~:text=B35678/S5678-,Diamoeba,-Forms%20large%20diamonds
+
+B/S           0.0  -1   0 1     0   0   0
+B25678/S5678  0.0  -1   0 1   255 255 255

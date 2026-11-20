@@ -1,0 +1,7 @@
+B368/S245
+1,2
+
+c https://en.wikipedia.org/wiki/Life-like_cellular_automaton#:~:text=B36/S125-,2x2,-If%20a%20pattern
+
+B/S        0.0  -1   0 1     0   0   0
+B36/S125  0.0  -1   0 1   255 255 255

@@ -64,6 +64,9 @@ int main() {
 		if (SimState::presentRules) {
 			system("cls");
 
+			// trust me i need it
+			clamp(SimState::manualFillState, 0, (int)SimState::rules.size()-1);
+
 			// TODO turn many cout into adding to string, faster cout
 
 			// output rules
@@ -122,11 +125,11 @@ int main() {
 					// output survival values
 					std::cout << ansi_reset << "/" << getPresentColor(ri, 1) << "S";
 					for (size_t sb = 0; sb < thisRule.sv_survivalValues.size(); ++sb) {
-						std::cout << getPresentColor(ri, 1) << thisRule.sv_survivalValues[sb] << ansi_reset;
+						std::cout << getPresentColor(ri, 1) << thisRule.sv_survivalValues[sb];
 					}
 
 					// bounds
-					std::cout << std::string(maxPadding-thisPadding+2, ' ') << getPresentColor(ri, 2) << padString(round(thisRule.outOfBounds, 1), 2) << ansi_reset;
+					std::cout << ansi_reset << std::string(maxPadding-thisPadding+2, ' ') << getPresentColor(ri, 2) << padString(round(thisRule.outOfBounds, 1), 2) << ansi_reset;
 					
 					// explicit jump
 					std::cout << "    " << getPresentColor(ri, 3) << padString(thisRule.explicitJump, 2);
