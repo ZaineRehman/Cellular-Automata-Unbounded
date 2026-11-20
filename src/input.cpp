@@ -11,52 +11,50 @@
 
 void Inputs::handleMouseEvents(float& mouseX, float& mouseY, uint32_t& mouseState) {
 	if (mouseState & SDL_BUTTON_LMASK || mouseState & SDL_BUTTON_RMASK) {
-		if (SimState::paused == 0 || 1) {  // no longer care about paused
-			if (mouseX >= 0 && mouseX < SimState::screenWidth && mouseY >= 0 && mouseY < SimState::screenHeight) {
-				int mouseRelX = mouseX / SimState::pixelsPerCell;
-				int mouseRelY = mouseY / SimState::pixelsPerCell;
+		if (mouseX >= 0 && mouseX < SimState::screenWidth && mouseY >= 0 && mouseY < SimState::screenHeight) {
+			int mouseRelX = mouseX / SimState::pixelsPerCell;
+			int mouseRelY = mouseY / SimState::pixelsPerCell;
 
-				// radius
+			// radius
 
-				if(SimState::mouseRadius == 0) {
-					for (size_t py = 0; py < SimState::pixelsPerCell; ++py) {
-						for (size_t px = 0; px < SimState::pixelsPerCell; ++px) {
-							int newState = 0;
-							if (SimState::mouseFillMethod == 0) newState = SimState::rules.size()-1;
-							else if (SimState::mouseFillMethod == 1) newState = rand() % (SimState::rules.size()-1) + 1;
-							else if (SimState::mouseFillMethod == 2) newState = rand() % SimState::rules.size();
+			if(SimState::mouseRadius == 0) {
+				for (size_t py = 0; py < SimState::pixelsPerCell; ++py) {
+					for (size_t px = 0; px < SimState::pixelsPerCell; ++px) {
+						int newState = 0;
+						if (SimState::mouseFillMethod == 0) newState = SimState::rules.size()-1;
+						else if (SimState::mouseFillMethod == 1) newState = rand() % (SimState::rules.size()-1) + 1;
+						else if (SimState::mouseFillMethod == 2) newState = rand() % SimState::rules.size();
 
-							SimState::cellMap[mouseRelY*SimState::cellsWidth + mouseRelX].state = newState;
-						}
+						SimState::cellMap[mouseRelY*SimState::cellsWidth + mouseRelX].state = newState;
 					}
 				}
+			}
 
-				// these are poorly named :)
-				for (int minRadY = -SimState::mouseRadius; minRadY <= SimState::mouseRadius; ++minRadY) {
-					for (int minRadX = -SimState::mouseRadius; minRadX <= SimState::mouseRadius; ++minRadX) {
-						if (
-							// no static_cast, sue me
-							(mouseRelY+minRadY) >= 0 && (mouseRelY+minRadY) < (int)SimState::cellsHeight 
-							&& (mouseRelX+minRadX) >= 0 && (mouseRelX+minRadX) < (int)SimState::cellsWidth  // screen bounds
-							&& sqrt(pow(minRadX,2) + pow(minRadY,2)) <= (float)SimState::mouseRadius        // radius bounds
-						) {
-							// repeated code
-							for (size_t py = 0; py < SimState::pixelsPerCell; ++py) {
-								for (size_t px = 0; px < SimState::pixelsPerCell; ++px) {
-									int newState = 0;
-									if (mouseState & SDL_BUTTON_RMASK);
-									else if (SimState::mouseFillMethod == 0) newState = SimState::rules.size()-1;
-									else if (SimState::mouseFillMethod == 1) newState = rand() % (SimState::rules.size()-1) + 1;
-									else if (SimState::mouseFillMethod == 2) newState = rand() % SimState::rules.size();
+			// these are poorly named :)
+			for (int minRadY = -SimState::mouseRadius; minRadY <= SimState::mouseRadius; ++minRadY) {
+				for (int minRadX = -SimState::mouseRadius; minRadX <= SimState::mouseRadius; ++minRadX) {
+					if (
+						// no static_cast, sue me
+						(mouseRelY+minRadY) >= 0 && (mouseRelY+minRadY) < (int)SimState::cellsHeight 
+						&& (mouseRelX+minRadX) >= 0 && (mouseRelX+minRadX) < (int)SimState::cellsWidth  // screen bounds
+						&& sqrt(pow(minRadX,2) + pow(minRadY,2)) <= (float)SimState::mouseRadius        // radius bounds
+					) {
+						// repeated code
+						for (size_t py = 0; py < SimState::pixelsPerCell; ++py) {
+							for (size_t px = 0; px < SimState::pixelsPerCell; ++px) {
+								int newState = 0;
+								if (mouseState & SDL_BUTTON_RMASK);
+								else if (SimState::mouseFillMethod == 0) newState = SimState::manualFillState;
+								else if (SimState::mouseFillMethod == 1) newState = rand() % (SimState::rules.size()-1) + 1;
+								else if (SimState::mouseFillMethod == 2) newState = rand() % SimState::rules.size();
 
-									SimState::cellMap[(mouseRelY+minRadY)*SimState::cellsWidth + (mouseRelX+minRadX)].state = newState;
-								}
+								SimState::cellMap[(mouseRelY+minRadY)*SimState::cellsWidth + (mouseRelX+minRadX)].state = newState;
 							}
 						}
 					}
 				}
 			}  // yikes, you could get lost in these
-		}
+		}      // (used to be more, too)
 	}
 }
 
@@ -85,7 +83,8 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 					SimState::presentRules = true;
 					break;
 				case SDLK_LEFT: {
-					int max = static_cast<int>(SimState::rules.size()+4);
+					//                             TODO magic number  v
+					int max = static_cast<int>(SimState::rules.size()+5);
 					if (SimState::simMode == 1) max -= 2;
 
 					clamp_rollover(--SimState::edit_ruleIndex, 0, max);
@@ -93,7 +92,7 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 					break;
 				}
 				case SDLK_RIGHT: {
-					int max = static_cast<int>(SimState::rules.size()+4);
+					int max = static_cast<int>(SimState::rules.size()+5);
 					if (SimState::simMode == 1) max -= 2;
 
 					clamp_rollover(++SimState::edit_ruleIndex, 0, max);
@@ -101,18 +100,18 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 					break;
 				}
 				
-				case SDLK_MINUS:  // decrement rule value
-					if (SimState::simMode == 0 || SimState::edit_ruleIndex > 2) edit_desire = -1.0f;
+				case SDLK_MINUS:  // decrement rule value                     v TODO magic number (kinda)
+					if (SimState::simMode == 0 || SimState::edit_ruleIndex >= 2) edit_desire = -1.0f;
 					break;
 				case SDLK_EQUALS:  // increment rule value
-					if (SimState::simMode == 0 || SimState::edit_ruleIndex > 2) edit_desire = 1.0f;
+					if (SimState::simMode == 0 || SimState::edit_ruleIndex >= 2) edit_desire = 1.0f;
 					break;
 				
 				case SDLK_KP_PLUS: 
-					if (SimState::simMode == 0 || SimState::edit_ruleIndex > 2) edit_desire = .1f;
+					if (SimState::simMode == 0 || SimState::edit_ruleIndex >= 2) edit_desire = .1f;
 					break;
 				case SDLK_KP_MINUS: 
-					if (SimState::simMode == 0 || SimState::edit_ruleIndex > 2) edit_desire = -.1f;
+					if (SimState::simMode == 0 || SimState::edit_ruleIndex >= 2) edit_desire = -.1f;
 					break;
 				
 				case SDLK_0: 
@@ -206,7 +205,17 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 					break;
 				case SDLK_I:  // increase mouse fill method
 					SimState::mouseFillMethod++;
-					clamp(SimState::mouseFillMethod, 0, 2);
+					clamp(SimState::mouseFillMethod, 0, 2);  // TODO magic number
+					SimState::presentRules = true;
+					break;
+				case SDLK_H:  // decrease manual fill state
+					SimState::manualFillState--;
+					clamp(SimState::manualFillState, 0, (int)SimState::rules.size()-1);
+					SimState::presentRules = true;
+					break;
+				case SDLK_J:  // increase manual fill state
+					SimState::manualFillState++;
+					clamp(SimState::manualFillState, 0, (int)SimState::rules.size()-1);
 					SimState::presentRules = true;
 					break;
 				
@@ -293,7 +302,7 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 					break;
 				
 				case SDLK_RETURN:  // add topmost state
-					Rules defaultRuleset {2.0f, 4.0f, 3.0f, 3.0f, 0.0f, {0.0f}};
+					Rules defaultRuleset {2.0f, 4.0f, 3.0f, 3.0f, 0.0f, -1, {0.0f}};
 					LOOP(SimState::rules.size()-1) {
 						defaultRuleset.surrounding.push_back(1.0f);
 						defaultRuleset.sv_surrounding.push_back(1);
@@ -344,10 +353,14 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 				// outOfBounds
 				ruleToEdit.outOfBounds += edit_desire;
 				clamp(ruleToEdit.outOfBounds, SimState::minRuleVal, SimState::maxRuleVal);
+			} else if (SimState::edit_ruleIndex == 5) {
+				// explititJump
+				ruleToEdit.explicitJump += edit_desire;
+				clamp(ruleToEdit.explicitJump, 0, (int)SimState::rules.size()-1);
 			} else {
 				// surrounding rules
-				ruleToEdit.surrounding[SimState::edit_ruleIndex-5] += edit_desire;
-				clamp(ruleToEdit.surrounding[SimState::edit_ruleIndex-5], SimState::minRuleVal, SimState::maxRuleVal);
+				ruleToEdit.surrounding[SimState::edit_ruleIndex-6] += edit_desire;
+				clamp(ruleToEdit.surrounding[SimState::edit_ruleIndex-6], SimState::minRuleVal, SimState::maxRuleVal);
 			}
 		} else if (SimState::simMode == 1) {
 			if (SimState::edit_ruleIndex == 0) {
@@ -366,9 +379,17 @@ void Inputs::handleKeyEvents(SDL_Event& event) {
 					ruleToEdit.sv_survivalValues.push_back((int)edit_desire);
 					std::sort(ruleToEdit.sv_survivalValues.begin(), ruleToEdit.sv_survivalValues.end());
 				}
+			} else if (SimState::edit_ruleIndex == 2) {
+				// bounds value
+				ruleToEdit.outOfBounds += edit_desire;
+				clamp(ruleToEdit.outOfBounds, SimState::minRuleVal, SimState::maxRuleVal);
+			} else if (SimState::edit_ruleIndex == 3) {
+				// explititJump
+				ruleToEdit.explicitJump += edit_desire;
+				clamp(ruleToEdit.explicitJump, 0, (int)SimState::rules.size()-1);
 			} else if (edit_desire <= 1.0f) {
-				ruleToEdit.sv_surrounding[SimState::edit_ruleIndex-3] += (int)edit_desire;
-				clamp(ruleToEdit.sv_surrounding[SimState::edit_ruleIndex-3], (int)SimState::minRuleVal, (int)SimState::maxRuleVal);
+				ruleToEdit.sv_surrounding[SimState::edit_ruleIndex-4] += (int)edit_desire;
+				clamp(ruleToEdit.sv_surrounding[SimState::edit_ruleIndex-4], (int)SimState::minRuleVal, (int)SimState::maxRuleVal);
 			}
 		}
 

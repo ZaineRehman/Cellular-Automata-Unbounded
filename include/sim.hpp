@@ -17,6 +17,9 @@ struct Rules {
 	float maxForReproduction;
 	// value taken from out of bounds areas
 	float outOfBounds;
+	// explicit value to jump to when dead
+	// if -1, uses default up/down rules
+	int explicitJump;
 	// surrounding values taken from each cell state
 	// index 0 = for empty cells, index 1 = state 1, etc. 
 	std::vector<float> surrounding;
@@ -34,10 +37,12 @@ struct Rules {
 		float _minToSurvive, float _minToDie, 
 		float _minForReproduction, float _maxForReproduction, 
 		float _outOfBounds, 
+		int _explicitJump, 
 		const std::vector<float>& _surrounding
 	) : minToSurvive(_minToSurvive), minToDie(_minToDie), 
 		minForReproduction(_minForReproduction), maxForReproduction(_maxForReproduction), 
 		outOfBounds(_outOfBounds), 
+		explicitJump(_explicitJump), 
 		surrounding(_surrounding) 
 	{
 		sv_survivalValues = {2,3};

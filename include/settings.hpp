@@ -13,7 +13,7 @@ struct SimState {
 	inline static const float maxRuleVal = 16.0f;
 
 	// default CGOL
-	inline static const Rules defaultCgol {2.0f, 4.0f, 3.0f, 3.0f, 0.0f, {0.0f}};
+	inline static const Rules defaultCgol {2.0f, 4.0f, 3.0f, 3.0f, 0.0f, -1, {0.0f}};
 
 	inline static size_t screenWidth = 1000;
 	inline static size_t screenHeight = 1000;
@@ -34,7 +34,7 @@ struct SimState {
 	// simulation mode
 	// 0 = range-based
 	// 1 = set values
-	// 2 = ants
+	// 2 = turmites
 	inline static int simMode = 0;
 
 	// delay for cell calc per frame
@@ -52,10 +52,12 @@ struct SimState {
 	// 0 = point
 	inline static int mouseRadius = 1;
 	// mouse press fillin method
-	// 0 = highest state
+	// 0 = manual state
 	// 1 = random states, no empty
 	// 2 = random states, with empty
 	inline static int mouseFillMethod = 0;
+	// which state to put down during mouse fill method 0
+	inline static int manualFillState = 2;
 
 	inline static std::vector<RGBA_t> screen{SimState::screenHeight*SimState::screenWidth, RGBA_t{0,0,0,255}};
 
@@ -67,9 +69,9 @@ struct SimState {
 									newMap  = std::vector<Cell>(cellsWidth*cellsHeight, Cell{0});
 
 	inline static std::vector<Rules> rules {
-		Rules{-1.0f,-1.0f,  -1.0f,-1.0f,  0.0f,  {0.0f,0.0f,1.0f}}, 
-		Rules{ 2.0f, 3.0f,  -1.0f,-1.0f,  0.0f,  {0.0f,1.0f,2.0f}}, 
-		Rules{ 2.0f, 5.0f,   4.0f, 4.0f,  0.0f,  {0.0f,0.0f,1.0f}}, 
+		Rules{-1.0f,-1.0f,  -1.0f,-1.0f,  0.0f,  -1,  {0.0f,0.0f,1.0f}}, 
+		Rules{ 2.0f, 3.0f,  -1.0f,-1.0f,  0.0f,  -1,  {0.0f,1.0f,2.0f}}, 
+		Rules{ 2.0f, 5.0f,   4.0f, 4.0f,  0.0f,  -1,  {0.0f,0.0f,1.0f}}, 
 	};
 	inline static std::vector<RGBA_t> stateColors {
 		RGBA_t{  0,   0,   0, 255}, 

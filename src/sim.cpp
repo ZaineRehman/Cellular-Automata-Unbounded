@@ -28,6 +28,15 @@ void doCellCalc(
 				float outcome = getNeighboringValues(point, local);
 
 				if (
+					local.explicitJump != -1 && 
+					(
+						(SimState::simMode == 0 && (outcome < local.minToSurvive || outcome >= local.minToDie)) ||
+						(SimState::simMode == 1 && (!isIn(local.sv_survivalValues, (int)outcome)))
+					)
+				) {
+					// explicit jump activated
+					SimState::newMap[y*SimState::cellsWidth + x].state = local.explicitJump;
+				} else if (
 					(SimState::simMode == 0 && (outcome < local.minToSurvive)) ||
 					(SimState::simMode == 1 && (!isIn(local.sv_survivalValues, (int)outcome)))
 				) {
